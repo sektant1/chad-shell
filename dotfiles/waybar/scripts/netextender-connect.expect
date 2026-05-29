@@ -1,0 +1,28 @@
+#!/usr/bin/env expect
+
+set timeout 20
+
+set host [expr {[info exists env(DIONYSUS_VPN_HOST)] ? $env(DIONYSUS_VPN_HOST) : "vpn.certi.org.br"}]
+set domain [expr {[info exists env(DIONYSUS_VPN_DOMAIN)] ? $env(DIONYSUS_VPN_DOMAIN) : "certi.org"}]
+
+set usr [exec secret-tool lookup vpn username]
+set pw [exec secret-tool lookup vpn password]
+
+spawn netExtender $host -d $domain
+
+expect {
+    "User:" {
+        send -- "$usr\r"
+        exp_continue
+    }
+    "Password:" {
+        send -- "$pw\r"
+        set timeout -1
+        exp_continue
+    }
+    "Certificate" {
+        send -- "Y\r"
+        exp_continue
+    }
+    eof
+}

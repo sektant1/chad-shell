@@ -10,7 +10,7 @@ vpn_up=false
 if pgrep -x netExtender >/dev/null 2>&1; then
     vpn_up=true
 elif command -v ip >/dev/null 2>&1; then
-    if ip -o link show 2>/dev/null | grep -Eq "^[0-9]+: (tun|tap|wg|vpn|tailscale|zt)"; then
+    if ip -o link show 2>/dev/null | grep -Eq "^[0-9]+: (tun|tap|ppp|wg|vpn|tailscale|zt)"; then
         vpn_up=true
     fi
 fi

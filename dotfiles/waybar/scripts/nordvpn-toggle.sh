@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-vpn_script="${DIONYSUS_VPN_SCRIPT:-$HOME/vpn.sh}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+vpn_script="${DIONYSUS_VPN_SCRIPT:-$SCRIPT_DIR/netextender-connect.expect}"
 
 vpn_active=false
 if pgrep -x netExtender >/dev/null 2>&1; then
   vpn_active=true
-elif command -v ip >/dev/null 2>&1 && ip -o link show 2>/dev/null | awk -F': ' '{print $2}' | grep -Eq '^(tun|tap|wg|vpn|tailscale|zt)'; then
+elif command -v ip >/dev/null 2>&1 && ip -o link show 2>/dev/null | awk -F': ' '{print $2}' | grep -Eq '^(tun|tap|ppp|wg|vpn|tailscale|zt)'; then
   vpn_active=true
 fi
 

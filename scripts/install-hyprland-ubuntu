@@ -1,0 +1,432 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dry_run=false
+assume_yes=false
+include_extras=false
+include_build_deps=false
+include_nvidia=false
+enable_cppiber_ppa=false
+check_only=false
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/install-hyprland-ubuntu [options]
+
+Install a Hyprland-oriented package set on Ubuntu 24.04-family systems.
+Package groups are adapted from JaKooLit's Ubuntu-Hyprland 24.04 installer,
+but this script keeps destructive/system-wide actions opt-in or omitted.
+
+Options:
+  --dry-run        Print commands and package availability without installing.
+  --yes, -y        Pass -y to apt-get install.
+  --extras         Include extra desktop/rice tools.
+  --build-deps     Include source-build dependencies used by JaKooLit.
+  --nvidia         Include NVIDIA Wayland helper packages only.
+  --cppiber-ppa    Add ppa:cppiber/hyprland before resolving packages.
+  --check          Only report installed/missing essentials.
+
+Safety differences from the reference installer:
+  - Does not remove rofi/mako/dunst/cargo.
+  - Does not run rustup curl|sh.
+  - Does not chmod +s brightnessctl.
+  - Does not install or enable SDDM.
+  - Does not edit GRUB, initramfs, modprobe, shell, or ~/.config.
+  - Does not clone/build upstream projects automatically.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --dry-run) dry_run=true ;;
+    --yes | -y) assume_yes=true ;;
+    --extras) include_extras=true ;;
+    --build-deps) include_build_deps=true ;;
+    --nvidia) include_nvidia=true ;;
+    --cppiber-ppa) enable_cppiber_ppa=true ;;
+    --check) check_only=true ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ -r /etc/os-release ]]; then
+  # shellcheck disable=SC1091
+  source /etc/os-release
+else
+  printf 'Cannot read /etc/os-release; refusing to assume Ubuntu.\n' >&2
+  exit 1
+fi
+
+case "${ID:-}" in
+  ubuntu | pop | linuxmint | elementary | zorin) ;;
+  *)
+    printf 'This script targets Ubuntu-family apt systems, detected: %s\n' "${ID:-unknown}" >&2
+    exit 1
+    ;;
+esac
+
+if ! command -v apt-get >/dev/null 2>&1; then
+  printf 'apt-get not found.\n' >&2
+  exit 1
+fi
+
+sudo_cmd=()
+if ((EUID != 0)); then
+  if ! command -v sudo >/dev/null 2>&1; then
+    printf 'sudo not found; run as root or install sudo first.\n' >&2
+    exit 1
+  fi
+  sudo_cmd=(sudo)
+fi
+
+run() {
+  printf '+'
+  printf ' %q' "$@"
+  printf '\n'
+  if [[ "$dry_run" == false ]]; then
+    "$@"
+  fi
+}
+
+package_exists() {
+  apt-cache show "$1" >/dev/null 2>&1
+}
+
+is_installed() {
+  dpkg-query -W -f='${db:Status-Abbrev}' "$1" 2>/dev/null | grep -q '^ii '
+}
+
+check_essentials() {
+  local missing=() cmd_missing=() pkg cmd
+  local packages=(
+    waybar
+    wl-clipboard
+    kitty
+    grim
+    slurp
+    brightnessctl
+    playerctl
+    pavucontrol
+    pipewire
+    wireplumber
+  )
+  local commands=(
+    Hyprland
+    hyprctl
+    hypridle
+    hyprlock
+    hyprpaper
+    rofi
+    waybar
+  )
+
+  for pkg in "${packages[@]}"; do
+    is_installed "$pkg" || missing+=("$pkg")
+  done
+  for cmd in "${commands[@]}"; do
+    command -v "$cmd" >/dev/null 2>&1 || cmd_missing+=("$cmd")
+  done
+
+  if ((${#missing[@]} == 0 && ${#cmd_missing[@]} == 0)); then
+    printf 'ok: Hyprland essentials look installed.\n'
+    return 0
+  fi
+
+  if ((${#missing[@]} > 0)); then
+    printf 'missing packages:\n'
+    printf '  %s\n' "${missing[@]}"
+  fi
+  if ((${#cmd_missing[@]} > 0)); then
+    printf 'missing commands:\n'
+    printf '  %s\n' "${cmd_missing[@]}"
+  fi
+  return 1
+}
+
+if [[ "$check_only" == true ]]; then
+  check_essentials
+  exit $?
+fi
+
+available=()
+missing=()
+seen_packages=" "
+
+add_if_available() {
+  local pkg
+  for pkg in "$@"; do
+    [[ "$seen_packages" == *" $pkg "* ]] && continue
+    seen_packages+="$pkg "
+    if package_exists "$pkg"; then
+      available+=("$pkg")
+    else
+      missing+=("$pkg")
+    fi
+  done
+}
+
+core_wayland=(
+  dbus-user-session
+  dbus-x11
+  libpam-systemd
+  polkitd
+  polkit-kde-agent-1
+  xdg-desktop-portal
+  xdg-desktop-portal-gtk
+  xdg-desktop-portal-wlr
+  qtwayland5
+  qt6-wayland
+  wayland-protocols
+  xwayland
+  xdg-user-dirs
+  xdg-utils
+)
+
+hyprland_stack=(
+  hyprland
+  hypridle
+  hyprlock
+  hyprpaper
+  hyprpicker
+  hyprsunset
+  hyprwayland-scanner
+  xdg-desktop-portal-hyprland
+)
+
+runtime_packages=(
+  waybar
+  rofi
+  cliphist
+  grim
+  slurp
+  wl-clipboard
+  sway-notification-center
+  mako-notifier
+  wlogout
+  swaybg
+  swayidle
+  swaylock
+  kitty
+  alacritty
+  foot
+  thunar
+  gvfs
+  gvfs-backends
+  jq
+  inxi
+  imagemagick
+  cava
+  brightnessctl
+  btop
+  playerctl
+  pavucontrol
+  pamixer
+  libnotify-bin
+  alsa-utils
+  pipewire
+  wireplumber
+  pipewire-pulse
+  pulseaudio-utils
+  network-manager-gnome
+  blueman
+  rfkill
+  qt5ct
+  qt5-style-kvantum
+  qt5-style-kvantum-themes
+  qt6ct
+  python3-requests
+  python3-pip
+  python3-pyquery
+  python3-yaml
+  unzip
+  wget
+  bc
+  yad
+)
+
+extras=(
+  fonts-dejavu-core
+  fonts-noto-core
+  fonts-noto-color-emoji
+  papirus-icon-theme
+  nwg-look
+  nwg-displays
+  loupe
+  gnome-system-monitor
+  mousepad
+  mpv
+  mpv-mpris
+  nvtop
+  qalculate-gtk
+  imv
+  neofetch
+  fastfetch
+)
+
+build_deps=(
+  build-essential
+  cmake
+  cmake-extras
+  gettext
+  gir1.2-graphene-1.0
+  git
+  glslang-tools
+  gobject-introspection
+  golang
+  hwdata
+  libavcodec-dev
+  libavformat-dev
+  libavutil-dev
+  libcairo2-dev
+  libdeflate-dev
+  libdisplay-info-dev
+  libdrm-dev
+  libegl-dev
+  libegl1-mesa-dev
+  libgbm-dev
+  libgdk-pixbuf-2.0-dev
+  libgirepository1.0-dev
+  libgl1-mesa-dev
+  libgraphene-1.0-dev
+  libgtk-3-dev
+  libgulkan-dev
+  libinih-dev
+  libinput-dev
+  libliftoff-dev
+  libpam0g-dev
+  libpango1.0-dev
+  libpipewire-0.3-dev
+  libqt6svg6
+  libseat-dev
+  libspa-0.2-dev
+  libstartup-notification0-dev
+  libswresample-dev
+  libsystemd-dev
+  libtomlplusplus-dev
+  libudev-dev
+  libvkfft-dev
+  libvulkan-dev
+  libvulkan-volk-dev
+  libwayland-dev
+  libxcb-composite0-dev
+  libxcb-cursor-dev
+  libxcb-dri3-dev
+  libxcb-ewmh-dev
+  libxcb-icccm4-dev
+  libxcb-present-dev
+  libxcb-render-util0-dev
+  libxcb-res0-dev
+  libxcb-util-dev
+  libxcb-xinerama0-dev
+  libxcb-xinput-dev
+  libxcb-xkb-dev
+  libxkbcommon-dev
+  libxkbcommon-x11-dev
+  libxkbregistry-dev
+  libxml2-dev
+  libxxhash-dev
+  make
+  meson
+  ninja-build
+  nm-tray
+  openssl
+  psmisc
+  python3-mako
+  python3-markdown
+  python3-markupsafe
+  qt6-base-dev
+  scdoc
+  seatd
+  spirv-tools
+  vulkan-validationlayers
+)
+
+nvidia_packages=(
+  libva-wayland2
+  libnvidia-egl-wayland1
+  nvidia-vaapi-driver
+  nvidia-settings
+)
+
+printf 'Detected: %s %s (%s)\n' "${PRETTY_NAME:-Ubuntu}" "${VERSION_ID:-unknown}" "${VERSION_CODENAME:-unknown}"
+
+if [[ "$enable_cppiber_ppa" == true ]]; then
+  printf '\nRequested PPA: ppa:cppiber/hyprland\n'
+  printf 'This mirrors the JaKooLit Ubuntu-Hyprland 24.04 PPA path.\n'
+  install_props=("${sudo_cmd[@]}" apt-get install)
+  repo_cmd=("${sudo_cmd[@]}" add-apt-repository)
+  if [[ "$assume_yes" == true ]]; then
+    install_props+=(-y)
+    repo_cmd+=(-y)
+  fi
+  install_props+=(software-properties-common)
+  repo_cmd+=(ppa:cppiber/hyprland)
+  run "${sudo_cmd[@]}" apt-get update
+  run "${install_props[@]}"
+  run "${repo_cmd[@]}"
+fi
+
+run "${sudo_cmd[@]}" apt-get update
+
+add_if_available "${core_wayland[@]}"
+add_if_available "${hyprland_stack[@]}"
+add_if_available "${runtime_packages[@]}"
+
+if [[ "$include_extras" == true ]]; then
+  add_if_available "${extras[@]}"
+fi
+
+if [[ "$include_build_deps" == true ]]; then
+  add_if_available "${build_deps[@]}"
+fi
+
+if [[ "$include_nvidia" == true ]]; then
+  add_if_available "${nvidia_packages[@]}"
+fi
+
+if ((${#missing[@]} > 0)); then
+  printf '\nUnavailable in enabled apt repositories:\n'
+  printf '  %s\n' "${missing[@]}"
+fi
+
+if ((${#available[@]} == 0)); then
+  printf 'No installable packages found.\n'
+  exit 0
+fi
+
+install_cmd=("${sudo_cmd[@]}" apt-get install)
+if [[ "$assume_yes" == true ]]; then
+  install_cmd+=(-y)
+fi
+install_cmd+=("${available[@]}")
+
+printf '\nInstallable packages:\n'
+printf '  %s\n' "${available[@]}"
+printf '\n'
+run "${install_cmd[@]}"
+
+printf '\nPost-install check:\n'
+check_essentials || true
+
+cat <<'EOF'
+
+Next steps:
+  ./scripts/doctor
+  ./scripts/install --dry-run hypr waybar rofi
+
+If Hyprland packages are missing on Ubuntu 24.04:
+  ./scripts/install-hyprland-ubuntu --dry-run --cppiber-ppa
+
+Review that output before running it without --dry-run. Keep your existing
+GNOME/KDE session installed until Hyprland login works reliably.
+EOF
+

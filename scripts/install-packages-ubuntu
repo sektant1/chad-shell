@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dry_run=false
+with_desktop=false
+with_optional=false
+assume_yes=false
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/install-packages-ubuntu [--dry-run] [--yes] [--desktop] [--optional]
+
+Install Ubuntu 24.04 packages used by these dotfiles.
+
+Flags:
+  --dry-run   Print commands and package availability without installing.
+  --yes       Pass -y to apt-get install.
+  --desktop   Include Waybar/Hyprland-related packages when available.
+  --optional  Include optional tools and integrations when available.
+
+This script uses apt only. It does not install AUR packages, PPAs, curl|sh
+installers, login managers, shells, or remote build scripts.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --dry-run) dry_run=true ;;
+    --yes | -y) assume_yes=true ;;
+    --desktop) with_desktop=true ;;
+    --optional) with_optional=true ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ -r /etc/os-release ]]; then
+  # shellcheck disable=SC1091
+  source /etc/os-release
+else
+  printf 'Cannot read /etc/os-release; refusing to assume Ubuntu.\n' >&2
+  exit 1
+fi
+
+case "${ID:-}" in
+  ubuntu | pop | linuxmint | elementary | zorin) ;;
+  *)
+    printf 'This script targets Ubuntu-family apt systems, detected: %s\n' "${ID:-unknown}" >&2
+    exit 1
+    ;;
+esac
+
+if ! command -v apt-get >/dev/null 2>&1; then
+  printf 'apt-get not found.\n' >&2
+  exit 1
+fi
+
+sudo_cmd=()
+if ((EUID != 0)); then
+  if ! command -v sudo >/dev/null 2>&1; then
+    printf 'sudo not found; run as root or install sudo first.\n' >&2
+    exit 1
+  fi
+  sudo_cmd=(sudo)
+fi
+
+base_packages=(
+  bash
+  coreutils
+  findutils
+  gawk
+  grep
+  sed
+  iproute2
+  x11-xserver-utils
+  xdg-utils
+  jq
+  rofi
+  cava
+  alacritty
+  pipewire
+  wireplumber
+  pipewire-pulse
+  pulseaudio-utils
+  brightnessctl
+  playerctl
+  fontconfig
+  fonts-dejavu-core
+  fonts-noto-core
+  shellcheck
+  shfmt
+)
+
+desktop_packages=(
+  waybar
+  grim
+  slurp
+  wl-clipboard
+  thunar
+  pavucontrol
+  libnotify-bin
+  alsa-utils
+  hyprland
+  hyprpaper
+  hyprlock
+)
+
+optional_packages=(
+  kitty
+  foot
+  pcmanfm
+  blueman
+  rfkill
+  network-manager-gnome
+  neofetch
+  python3
+  python3-venv
+)
+
+available=()
+missing=()
+
+package_exists() {
+  apt-cache show "$1" >/dev/null 2>&1
+}
+
+add_if_available() {
+  local pkg
+  for pkg in "$@"; do
+    if package_exists "$pkg"; then
+      available+=("$pkg")
+    else
+      missing+=("$pkg")
+    fi
+  done
+}
+
+run() {
+  printf '+'
+  printf ' %q' "$@"
+  printf '\n'
+  if [[ "$dry_run" == false ]]; then
+    "$@"
+  fi
+}
+
+run "${sudo_cmd[@]}" apt-get update
+
+add_if_available "${base_packages[@]}"
+if [[ "$with_desktop" == true ]]; then
+  add_if_available "${desktop_packages[@]}"
+fi
+if [[ "$with_optional" == true ]]; then
+  add_if_available "${optional_packages[@]}"
+fi
+
+if ((${#missing[@]} > 0)); then
+  printf 'Unavailable in enabled apt repositories:\n'
+  printf '  %s\n' "${missing[@]}"
+fi
+
+if ((${#available[@]} == 0)); then
+  printf 'No installable packages found.\n'
+  exit 0
+fi
+
+install_cmd=("${sudo_cmd[@]}" apt-get install)
+if [[ "$assume_yes" == true ]]; then
+  install_cmd+=(-y)
+fi
+install_cmd+=("${available[@]}")
+
+run "${install_cmd[@]}"
+
+cat <<'EOF'
+
+Notes:
+- Ubuntu 24.04 may not ship current Hyprland/Eww packages in default repos.
+- This script intentionally does not add PPAs or run remote installers.
+- Install Nerd Fonts manually if you want decorative glyphs; the dotfiles have
+  monospace/ASCII fallbacks.
+EOF
+

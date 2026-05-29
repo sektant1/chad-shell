@@ -1,0 +1,311 @@
+@define-color bg #232a34;
+@define-color bg_deep #121821;
+@define-color panel #2b3440;
+@define-color steel #26313d;
+@define-color glass #303b47;
+
+@define-color cyan #4fc9f5;
+@define-color cyan_soft #9be4ff;
+@define-color cyan_dim #3a8fac;
+@define-color phosphor #b8ffda;
+
+@define-color peach #ffc0a3;
+@define-color peach_dim #d9957f;
+@define-color amber #fab387;
+
+@define-color red #ff6f7d;
+
+@define-color text #d9edf5;
+
+* {
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  font-family:
+    "GohuFont 11 Nerd Font", "GohuFont", "Terminus",
+    "JetBrainsMono Nerd Font Mono", monospace;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+window#waybar,
+#waybar {
+  color: @text;
+  background: transparent;
+}
+
+#clock,
+#custom-power,
+#custom-screenshot,
+#network,
+#bluetooth,
+#custom-microphone,
+#custom-vpn,
+#workspaces button,
+#custom-battery,
+#custom-volume,
+#custom-brightness,
+#custom-nvim,
+#custom-files,
+#tray,
+#battery,
+#pulseaudio,
+#backlight {
+  background: alpha(@steel, 0.72);
+  background-image:
+    linear-gradient(180deg, alpha(@cyan_soft, 0.10) 0, transparent 1px, transparent 4px),
+    linear-gradient(90deg, alpha(@cyan_dim, 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@bg_deep, 0.20), transparent 45%, alpha(@cyan, 0.035));
+  background-size: 100% 5px, 12px 100%, 100% 100%;
+  border: 2px solid @cyan;
+  color: @cyan;
+  border-radius: 2px;
+  margin: 5px 4px;
+  padding: 1px 7px;
+  box-shadow:
+    inset 0 0 8px 0 alpha(@cyan, 0.13),
+    0 0 9px 1px alpha(@cyan, 0.30);
+}
+
+#custom-power,
+#custom-screenshot,
+#network,
+#bluetooth,
+#custom-microphone,
+#custom-vpn,
+#custom-battery,
+#custom-volume,
+#custom-brightness,
+#custom-nvim,
+#custom-files {
+  min-width: 52px;
+}
+
+#clock label,
+#custom-power label,
+#custom-screenshot label,
+#network label,
+#bluetooth label,
+#custom-microphone label,
+#custom-vpn label,
+#custom-battery label,
+#custom-volume label,
+#custom-brightness label,
+#custom-nvim label,
+#custom-files label {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 20px;
+  text-shadow:
+    0 0 2px alpha(@phosphor, 0.45),
+    0 0 7px alpha(@cyan, 0.42);
+}
+
+#clock {
+  color: @peach;
+  min-width: 92px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-color: @peach_dim;
+  background: alpha(@bg, 0.72);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@peach_dim, 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+  box-shadow: 0 0 7px 0 alpha(@peach, 0.14);
+}
+
+#custom-power,
+#custom-screenshot,
+#network,
+#bluetooth,
+#custom-microphone,
+#custom-nvim,
+#custom-files {
+  background: alpha(@steel, 0.72);
+}
+
+#custom-battery,
+#custom-volume,
+#custom-brightness {
+  background: alpha(@steel, 0.72);
+  border-color: alpha(@cyan, 0.88);
+}
+
+#custom-volume {
+  border-color: alpha(@cyan, 0.88);
+}
+
+#custom-vpn {
+  color: @peach;
+  border-color: alpha(@peach_dim, 0.88);
+  background: alpha(@steel, 0.72);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@peach_dim, 0.045) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+}
+
+#workspaces {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+#workspaces button {
+  all: initial;
+  color: @cyan;
+  min-width: 23px;
+  padding: 2px 8px;
+  margin: 5px 4px;
+  background: alpha(@steel, 0.72);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@cyan_dim, 0.04) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+  border: 2px solid alpha(@cyan_dim, 0.82);
+  border-radius: 2px;
+  font-family:
+    "GohuFont 11 Nerd Font", "GohuFont", "Terminus",
+    "JetBrainsMono Nerd Font Mono", monospace;
+  font-size: 15px;
+  font-weight: 900;
+  text-shadow: 0 0 4px alpha(@cyan, 0.22);
+  box-shadow: 0 0 7px 1px alpha(@cyan, 0.22);
+}
+
+#workspaces button.active {
+  color: @peach;
+  border-color: @cyan;
+  background: alpha(@panel, 0.78);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@peach_dim, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+  text-shadow: 0 0 5px alpha(@peach, 0.34);
+  box-shadow: 0 0 10px 1px alpha(@cyan, 0.28);
+}
+
+#workspaces button.urgent,
+#network.disconnected,
+#pulseaudio.muted,
+#custom-battery.critical,
+#custom-brightness.critical,
+#custom-volume.muted,
+#custom-microphone.muted {
+  color: @bg_deep;
+  background: @red;
+  background-image: linear-gradient(
+    90deg,
+    alpha(@peach, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 11px 100%;
+  border-color: @peach;
+  text-shadow: 0 0 5px alpha(@red, 0.34);
+  box-shadow: 0 0 8px 0 alpha(@red, 0.18);
+}
+
+#custom-vpn.critical {
+  color: @red;
+  background: alpha(@steel, 0.72);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@red, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+  border-color: @red;
+  text-shadow: 0 0 5px alpha(@red, 0.38);
+  box-shadow: 0 0 8px 0 alpha(@red, 0.18);
+}
+
+#custom-battery.warning,
+#custom-volume.warning,
+#custom-brightness.warning {
+  color: @amber;
+  border-color: @amber;
+  text-shadow: 0 0 5px alpha(@amber, 0.3);
+  box-shadow: 0 0 7px 0 alpha(@amber, 0.14);
+}
+
+#custom-battery.normal,
+#custom-volume.normal,
+#custom-brightness.normal,
+#custom-microphone.normal,
+#custom-vpn.normal {
+  color: @cyan;
+}
+
+#custom-battery.hidden,
+#custom-volume.hidden,
+#custom-brightness.hidden {
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+#clock:hover,
+#custom-power:hover,
+#custom-screenshot:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-microphone:hover,
+#custom-vpn:hover,
+#workspaces button:hover,
+#custom-battery:hover,
+#custom-volume:hover,
+#custom-brightness:hover,
+#custom-nvim:hover,
+#custom-files:hover,
+#tray:hover {
+  color: @cyan_soft;
+  background: alpha(@panel, 0.78);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@cyan_soft, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 11px 100%;
+  border-color: @cyan_soft;
+  text-shadow: 0 0 6px alpha(@cyan_soft, 0.4);
+  box-shadow: 0 0 12px 1px alpha(@cyan, 0.34);
+}
+
+#clock:hover,
+#custom-vpn:hover {
+  color: @peach;
+  border-color: @peach;
+}
+
+tooltip {
+  background: alpha(@bg_deep, 0.78);
+  background-image: linear-gradient(
+    90deg,
+    alpha(@cyan_dim, 0.04) 1px,
+    transparent 1px
+  );
+  background-size: 12px 100%;
+  color: @text;
+  border: 2px solid @cyan_dim;
+  border-radius: 2px;
+  padding: 6px 8px;
+  box-shadow: 0 0 8px 0 alpha(@cyan, 0.14);
+}
+
+tooltip label {
+  color: @cyan_soft;
+  padding: 2px;
+  text-shadow: 0 0 5px alpha(@cyan_soft, 0.3);
+}

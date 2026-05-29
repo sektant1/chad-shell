@@ -1,0 +1,218 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dry_run=false
+with_desktop=false
+with_optional=false
+assume_yes=false
+with_aur=false
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/install-packages-arch [--dry-run] [--yes] [--desktop] [--optional] [--aur]
+
+Install Arch Linux packages used by these dotfiles.
+
+Flags:
+  --dry-run   Print commands and package availability without installing.
+  --yes       Pass --noconfirm to pacman/AUR helper.
+  --desktop   Include Waybar/Hyprland-related packages.
+  --optional  Include optional tools and integrations.
+  --aur       Install AUR-only packages with yay or paru when available.
+
+This script uses pacman for repo packages. It only uses an AUR helper when
+--aur is passed, and it does not install login managers, shells, or remote
+install scripts.
+USAGE
+}
+
+while (($#)); do
+  case "$1" in
+    --dry-run) dry_run=true ;;
+    --yes | -y) assume_yes=true ;;
+    --desktop) with_desktop=true ;;
+    --optional) with_optional=true ;;
+    --aur) with_aur=true ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ -r /etc/os-release ]]; then
+  # shellcheck disable=SC1091
+  source /etc/os-release
+else
+  printf 'Cannot read /etc/os-release; refusing to assume Arch.\n' >&2
+  exit 1
+fi
+
+case "${ID:-}" in
+  arch | endeavouros | cachyos | manjaro | garuda) ;;
+  *)
+    printf 'This script targets Arch-family pacman systems, detected: %s\n' "${ID:-unknown}" >&2
+    exit 1
+    ;;
+esac
+
+if ! command -v pacman >/dev/null 2>&1; then
+  printf 'pacman not found.\n' >&2
+  exit 1
+fi
+
+sudo_cmd=()
+if ((EUID != 0)); then
+  if ! command -v sudo >/dev/null 2>&1; then
+    printf 'sudo not found; run as root or install sudo first.\n' >&2
+    exit 1
+  fi
+  sudo_cmd=(sudo)
+fi
+
+base_packages=(
+  bash
+  coreutils
+  findutils
+  gawk
+  grep
+  sed
+  iproute2
+  xorg-xrandr
+  xdg-utils
+  jq
+  rofi
+  cava
+  alacritty
+  pipewire
+  wireplumber
+  pipewire-pulse
+  libpulse
+  brightnessctl
+  playerctl
+  fontconfig
+  ttf-dejavu
+  noto-fonts
+  ttf-jetbrains-mono-nerd
+  shellcheck
+  shfmt
+  grim
+  slurp
+  wl-clipboard
+)
+
+desktop_packages=(
+  hyprland
+  hyprpaper
+  hyprlock
+  xdg-desktop-portal-hyprland
+  waybar
+  thunar
+  pavucontrol
+  libnotify
+  alsa-utils
+)
+
+optional_packages=(
+  kitty
+  foot
+  pcmanfm
+  blueman
+  bluez
+  bluez-utils
+  network-manager-applet
+  neofetch
+  python
+  python-numpy
+)
+
+aur_packages=(
+  eww
+)
+
+available=()
+missing=()
+
+package_exists() {
+  pacman -Si "$1" >/dev/null 2>&1
+}
+
+add_if_available() {
+  local pkg
+  for pkg in "$@"; do
+    if package_exists "$pkg"; then
+      available+=("$pkg")
+    else
+      missing+=("$pkg")
+    fi
+  done
+}
+
+run() {
+  printf '+'
+  printf ' %q' "$@"
+  printf '\n'
+  if [[ "$dry_run" == false ]]; then
+    "$@"
+  fi
+}
+
+add_if_available "${base_packages[@]}"
+if [[ "$with_desktop" == true ]]; then
+  add_if_available "${desktop_packages[@]}"
+fi
+if [[ "$with_optional" == true ]]; then
+  add_if_available "${optional_packages[@]}"
+fi
+
+if ((${#missing[@]} > 0)); then
+  printf 'Unavailable in enabled pacman repositories:\n'
+  printf '  %s\n' "${missing[@]}"
+fi
+
+if ((${#available[@]} > 0)); then
+  install_cmd=("${sudo_cmd[@]}" pacman -S --needed)
+  if [[ "$assume_yes" == true ]]; then
+    install_cmd+=(--noconfirm)
+  fi
+  install_cmd+=("${available[@]}")
+  run "${install_cmd[@]}"
+else
+  printf 'No pacman packages selected.\n'
+fi
+
+if [[ "$with_aur" == true ]]; then
+  aur_helper=""
+  if command -v yay >/dev/null 2>&1; then
+    aur_helper=yay
+  elif command -v paru >/dev/null 2>&1; then
+    aur_helper=paru
+  fi
+
+  if [[ -z "$aur_helper" ]]; then
+    printf 'AUR requested, but yay/paru was not found. Install eww manually or install an AUR helper.\n' >&2
+    exit 1
+  fi
+
+  aur_cmd=("$aur_helper" -S --needed)
+  if [[ "$assume_yes" == true ]]; then
+    aur_cmd+=(--noconfirm)
+  fi
+  aur_cmd+=("${aur_packages[@]}")
+  run "${aur_cmd[@]}"
+fi
+
+cat <<'NOTES'
+
+Notes:
+- `scripts/install` is the distro-neutral dotfile linker.
+- Eww is treated as AUR because it is commonly installed from AUR on Arch.
+- Enable Bluetooth services yourself if you use the Waybar Bluetooth GUI:
+  sudo systemctl enable --now bluetooth
+NOTES

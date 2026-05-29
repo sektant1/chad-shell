@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/dionysus.sh
+source "$SCRIPT_DIR/lib/dionysus.sh"
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/display-autoconfig [--dry-run]
+
+Detect connected displays and apply a conservative layout.
+X11: uses xrandr --auto and places connected outputs left-to-right.
+Wayland: does not force layout; prints detected compositor guidance.
+Overrides: ~/.config/dionysus/local.env may define DIONYSUS_PRIMARY_MONITOR.
+EOF
+}
+
+dry_run=false
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) dry_run=true ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+load_local_env
+
+run() {
+  printf '+ %q' "$1"
+  shift
+  printf ' %q' "$@"
+  printf '\n'
+  if [[ "$dry_run" == false ]]; then
+    "$@"
+  fi
+}
+
+if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]; then
+  if has_cmd hyprctl && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    hyprctl monitors 2>/dev/null || true
+    printf 'Wayland/Hyprland detected: keep monitor policy in hyprland.conf or use hyprctl/GUI tools.\n'
+  else
+    printf 'Wayland detected: xrandr layout is not applicable. No changes made.\n'
+  fi
+  exit 0
+fi
+
+if ! has_cmd xrandr; then
+  printf 'xrandr not found; no display changes made.\n' >&2
+  exit 0
+fi
+
+mapfile -t outputs < <(xrandr --query | awk '$2 == "connected" {print $1}')
+if ((${#outputs[@]} == 0)); then
+  printf 'No connected xrandr outputs found.\n' >&2
+  exit 0
+fi
+
+primary="${DIONYSUS_PRIMARY_MONITOR:-}"
+if [[ -z "$primary" ]]; then
+  for output in "${outputs[@]}"; do
+    case "$output" in
+      eDP*|EDP*|LVDS*) internal="$output" ;;
+      *) external="${external:-$output}" ;;
+    esac
+  done
+  primary="${external:-${internal:-${outputs[0]}}}"
+fi
+
+cmd=(xrandr)
+previous=""
+for output in "${outputs[@]}"; do
+  cmd+=(--output "$output" --auto)
+  if [[ "$output" == "$primary" ]]; then
+    cmd+=(--primary)
+  fi
+  if [[ -n "$previous" ]]; then
+    cmd+=(--right-of "$previous")
+  fi
+  previous="$output"
+done
+
+run "display" "${cmd[@]}"
+
+dpi="$(xrandr --query | awk '
+  / connected/ && match($0, /[0-9]+mm x [0-9]+mm/) {
+    split(substr($0, RSTART, RLENGTH), mm, /mm x |mm/)
+    getline mode
+    if (match(mode, /[0-9]+x[0-9]+/)) {
+      split(substr(mode, RSTART, RLENGTH), px, "x")
+      if (mm[1] > 0) {
+        printf "%.0f\n", px[1] / (mm[1] / 25.4)
+        exit
+      }
+    }
+  }')"
+dpi="${dpi:-96}"
+scale=1
+if [[ "$dpi" =~ ^[0-9]+$ ]]; then
+  if ((dpi >= 180)); then scale=2; elif ((dpi >= 130)); then scale=1.5; fi
+fi
+printf 'DIONYSUS_DPI=%s\nDIONYSUS_SCALE=%s\nDIONYSUS_PRIMARY_MONITOR=%s\n' "$dpi" "$scale" "$primary"
+

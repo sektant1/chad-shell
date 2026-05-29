@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=scripts/lib/dionysus.sh
+source "$SCRIPT_DIR/lib/dionysus.sh"
+
+status=0
+
+run_optional() {
+  local name=$1
+  shift
+  if has_cmd "$name"; then
+    "$@" || status=1
+  else
+    printf 'skip %s: command not found\n' "$name"
+  fi
+}
+
+mapfile -t shell_files < <(find "$REPO_DIR/scripts" "$REPO_DIR/dotfiles" -type f \( -name '*.sh' -o -name 'install' -o -name 'doctor' -o -name 'lint' -o -name 'display-autoconfig' \) | sort)
+run_optional shellcheck shellcheck "${shell_files[@]}"
+run_optional shfmt shfmt -d "${shell_files[@]}"
+
+if has_cmd hyprctl; then
+  hyprctl -c "$REPO_DIR/dotfiles/hypr/hyprland.conf" --config-errors || status=1
+else
+  printf 'skip hyprland validation: hyprctl not found\n'
+fi
+
+run_optional rofi rofi -no-config -no-lazy-grab -theme "$REPO_DIR/dotfiles/rofi/theme.rasi" -dump-theme >/dev/null
+
+exit "$status"
+

@@ -8,12 +8,12 @@ if [[ -z "$home_dir" ]]; then
 fi
 
 if command -v xdg-open >/dev/null 2>&1; then
-    exec xdg-open "$home_dir"
+    exec ~/.config/waybar/scripts/open-on-workspace.sh xdg-open "$home_dir"
 fi
 
 for file_manager in thunar nautilus dolphin nemo pcmanfm; do
     if command -v "$file_manager" >/dev/null 2>&1; then
-        exec "$file_manager" "$home_dir"
+        exec ~/.config/waybar/scripts/open-on-workspace.sh "$file_manager" "$home_dir"
     fi
 done
 

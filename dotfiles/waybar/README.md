@@ -10,7 +10,7 @@
 
 ##  Features
 - **Custom workspace** clickable modules (`workspace-1.sh` … `workspace-4.sh`)
-- **Battery status** with JSON script + native fallback, dynamic icons, warnings
+- **Battery status** with JSON script + native fallback, dynamic icons, warnings, and right-click Ubuntu power mode cycling
 - **Volume control** via PipeWire (`wpctl`) with mute, scroll-to-change volume, and right-click sound settings.
 - **Microphone toggle** with instant mute/unmute
 - **Brightness control** with slider, scroll actions, and toggle.
@@ -35,6 +35,7 @@
 │   ├── mic.sh
 │   ├── nordvpn-status.sh
 │   ├── nordvpn-toggle.sh
+│   ├── power-profile-toggle.sh
 │   ├── powermenu.sh
 │   ├── volume.sh
 │   └── workspaces
@@ -53,6 +54,7 @@
 - `pavucontrol` or `pwvucontrol` (optional sound settings UI)
 - `playerctl`
 - `brightnessctl`
+- `powerprofilesctl` (Ubuntu power mode switching)
 - `nm-connection-editor`
 - `nordvpn` (CLI client)
 - `pactl` (PulseAudio/PipeWire control)
@@ -66,4 +68,3 @@ Make sure scripts are executable:
 - `config` → main Waybar configuration
 - `style.css` → custom styling
 - `scripts/` → helper scripts for modules
-

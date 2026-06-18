@@ -24,7 +24,9 @@ percent=$((brightness * 100 / max_brightness))
 device="$(brightnessctl --machine-readable 2>/dev/null | awk -F, 'NR==1 {print $1}')"
 device="${device:-unknown}"
 
-if ((percent < 55)); then
+if ((percent < 20)); then
+  class="critical"
+elif ((percent < 55)); then
   class="warning"
 else
   class="normal"
@@ -33,3 +35,4 @@ fi
 text="[ <span size='large'></span> ${percent}% ]"
 tooltip="Brightness: ${percent}%\nDevice: ${device}"
 json_text "$text" "$tooltip" "$class"
+

@@ -18,7 +18,7 @@ json_text() {
   printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' \
     "$(json_escape "$text")" \
     "$(json_escape "$tooltip")" \
-    "$(json_escape "$class")"
+    "$(json_escape "$class")" 2>/dev/null || true
 }
 
 bar10() {

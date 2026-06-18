@@ -38,7 +38,7 @@
         "tooltip-format-wifi": "{essid}\nDown {bandwidthDownBytes} Up {bandwidthUpBytes}",
         "tooltip-format-ethernet": "{ifname}\nDown {bandwidthDownBytes} Up {bandwidthUpBytes}",
         "tooltip-format-disconnected": "Disconnected",
-        "on-click": "sh -c 'command -v nm-connection-editor >/dev/null 2>&1 && nm-connection-editor'",
+        "on-click": "sh -c 'command -v nm-connection-editor >/dev/null 2>&1 && ~/.config/waybar/scripts/open-on-workspace.sh nm-connection-editor'",
         "interval": 5,
         "markup": "pango"
     },
@@ -48,13 +48,15 @@
         "on-click": "~/.config/waybar/scripts/bluetooth-toggle.sh",
         "tooltip-format": "Bluetooth is {status}",
         "interval": 5,
-        "on-click-right": "sh -c 'command -v blueman-manager >/dev/null 2>&1 && blueman-manager'",
+        "on-click-right": "sh -c 'command -v blueman-manager >/dev/null 2>&1 && ~/.config/waybar/scripts/open-on-workspace.sh blueman-manager'",
         "markup": "pango"
     },
     "custom/battery": {
         "exec": "~/.config/waybar/scripts/battery.sh",
         "return-type": "json",
         "interval": 10,
+        "signal": 10,
+        "on-click-right": "~/.config/waybar/scripts/power-profile-toggle.sh",
         "markup": "pango"
     },
     "custom/microphone": {
@@ -91,7 +93,7 @@
         "format": "[ <span size=\"large\"></span> ]",
         "tooltip": true,
         "tooltip-format": "Open Neovim",
-        "on-click": "alacritty -e nvim",
+        "on-click": "~/.config/waybar/scripts/open-on-workspace.sh alacritty -e nvim",
         "markup": "pango"
     },
     "custom/files": {
@@ -141,7 +143,6 @@
                 4
             ]
         },
-        "on-click": "activate",
         "sort-by-number": true,
         "all-outputs": false
     },

@@ -6,13 +6,16 @@ state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
 log_dir="$state_home/dionysus"
 mkdir -p "$log_dir"
 logfile="$log_dir/waybar-watcher.log"
+waybar_logfile="$log_dir/waybar.log"
+hyprpaper_config="$config_home/hypr/hyprpaper.conf"
 
-wallpaper_with_window="${DIONYSUS_WALLPAPER_ACTIVE:-/home/gfe/Pictures/how-did-pewdiepie-get-his-waybar-looking-like-this-v0-3vgzbhbnxyze1.webp}"
-wallpaper_without_window="${DIONYSUS_WALLPAPER_IDLE:-/home/gfe/Pictures/how-did-pewdiepie-get-his-waybar-looking-like-this-v0-3vgzbhbnxyze1.webp}"
+wallpaper_with_window="${DIONYSUS_WALLPAPER_ACTIVE:-/home/gfe/Personal/dionysus/dotfiles/hypr/wallpapers/laptop-wallpaper.webp}"
+wallpaper_without_window="${DIONYSUS_WALLPAPER_IDLE:-/home/gfe/Personal/dionysus/dotfiles/hypr/wallpapers/laptop-wallpaper.webp}"
 current_wallpaper=""
 eww_visible=false
 waybar_visible=false
 keep_waybar_visible="${DIONYSUS_KEEP_WAYBAR_VISIBLE:-true}"
+persist_waybar_hidden="${DIONYSUS_PERSIST_WAYBAR_HIDDEN:-false}"
 waybar_hidden_flag="$log_dir/waybar-hidden"
 
 has_cmd() {
@@ -23,18 +26,30 @@ log() {
   printf '%s %s\n' "$(date '+%F %T')" "$*" >>"$logfile"
 }
 
-primary_monitor() {
-  hyprctl monitors -j 2>/dev/null | jq -r 'map(select(.focused == true))[0].name // .[0].name // "auto"' 2>/dev/null
+start_waybar() {
+  has_cmd waybar || return 0
+  pgrep -x waybar >/dev/null 2>&1 && return 0
+  waybar >>"$waybar_logfile" 2>&1 &
+}
+
+monitor_names() {
+  hyprctl monitors -j 2>/dev/null | jq -r '.[].name' 2>/dev/null
 }
 
 set_wallpaper() {
   local wallpaper=$1 monitor
-  [[ -f "$wallpaper" ]] || return 0
+  [[ -f "$wallpaper" ]] || return 1
   has_cmd hyprctl || return 0
-  monitor="$(primary_monitor)"
-  [[ "$monitor" == "auto" ]] && return 0
-  hyprctl hyprpaper preload "$wallpaper" >/dev/null 2>&1 || true
-  hyprctl hyprpaper wallpaper "$monitor,$wallpaper,1" >/dev/null 2>&1 || true
+  while IFS= read -r monitor; do
+    [[ -n "$monitor" ]] || continue
+    hyprctl hyprpaper wallpaper "$monitor,$wallpaper" >/dev/null 2>&1 || true
+  done < <(monitor_names)
+}
+
+start_hyprpaper() {
+  has_cmd hyprpaper || return 0
+  hyprpaper --config "$hyprpaper_config" >/dev/null 2>&1 &
+  sleep 1
 }
 
 eww_windows=(
@@ -59,9 +74,18 @@ if ! has_cmd hyprctl || ! has_cmd jq; then
   exit 0
 fi
 
-if has_cmd hyprpaper && ! pgrep -x hyprpaper >/dev/null 2>&1; then
-  hyprpaper >/dev/null 2>&1 &
-  sleep 1
+if [[ "$persist_waybar_hidden" != true ]]; then
+  rm -f "$waybar_hidden_flag"
+fi
+
+if has_cmd hyprpaper; then
+  if ! pgrep -x hyprpaper >/dev/null 2>&1; then
+    start_hyprpaper
+  elif ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
+    log "hyprpaper IPC unavailable; restarting hyprpaper"
+    pkill -x hyprpaper >/dev/null 2>&1 || true
+    start_hyprpaper
+  fi
 fi
 
 if [[ -f "$waybar_hidden_flag" ]]; then
@@ -69,7 +93,7 @@ if [[ -f "$waybar_hidden_flag" ]]; then
 elif has_cmd waybar && pgrep -x waybar >/dev/null 2>&1; then
   waybar_visible=true
 elif [[ "$keep_waybar_visible" == true ]] && has_cmd waybar; then
-  waybar >/dev/null 2>&1 &
+  start_waybar
   waybar_visible=true
 fi
 
@@ -87,7 +111,7 @@ while true; do
 
   if [[ "$window_count" == "0" ]]; then
     if [[ "$current_wallpaper" != "$wallpaper_without_window" ]]; then
-      set_wallpaper "$wallpaper_without_window"
+      set_wallpaper "$wallpaper_without_window" || log "failed to set wallpaper: $wallpaper_without_window"
       current_wallpaper="$wallpaper_without_window"
     fi
 
@@ -100,7 +124,7 @@ while true; do
     fi
   else
     if [[ "$current_wallpaper" != "$wallpaper_with_window" ]]; then
-      set_wallpaper "$wallpaper_with_window"
+      set_wallpaper "$wallpaper_with_window" || log "failed to set wallpaper: $wallpaper_with_window"
       current_wallpaper="$wallpaper_with_window"
     fi
 
@@ -110,11 +134,10 @@ while true; do
     fi
 
     if [[ ! -f "$waybar_hidden_flag" && "$waybar_visible" == false ]] && has_cmd waybar; then
-      waybar >/dev/null 2>&1 &
+      start_waybar
       waybar_visible=true
     fi
   fi
 
-  sleep "${DIONYSUS_WATCH_INTERVAL:-0.25}"
+  sleep "${DIONYSUS_WATCH_INTERVAL:-2}"
 done
-

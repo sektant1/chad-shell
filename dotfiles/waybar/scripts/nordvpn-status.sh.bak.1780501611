@@ -18,5 +18,5 @@ fi
 if [[ "$vpn_up" == true ]]; then
     json_text "[ <span size='large'>󰖂</span> ]" "VPN connected" "normal"
 else
-    json_text "[ <span size='large'>󰦝</span> ]" "VPN disconnected" "standby"
+    json_text "[ <span size='large'>󰦝</span> ]" "VPN disconnected" "critical"
 fi

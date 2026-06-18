@@ -1,21 +1,24 @@
-@define-color bg #232a34;
-@define-color bg_deep #121821;
-@define-color panel #2b3440;
-@define-color steel #26313d;
-@define-color glass #303b47;
+@define-color bg #1d2524;
+@define-color bg_deep #0b1111;
+@define-color panel #263231;
+@define-color steel #202b2b;
+@define-color glass #2d3a38;
+@define-color graphite #151d1d;
 
-@define-color cyan #4fc9f5;
-@define-color cyan_soft #9be4ff;
-@define-color cyan_dim #3a8fac;
-@define-color phosphor #b8ffda;
+@define-color cyan #57d3df;
+@define-color cyan_soft #b5f8ff;
+@define-color cyan_dim #3b969a;
+@define-color phosphor #45f08a;
+@define-color phosphor_hot #8dffb2;
+@define-color phosphor_dim #1f8f55;
 
-@define-color peach #ffc0a3;
-@define-color peach_dim #d9957f;
-@define-color amber #fab387;
+@define-color peach #ffd1a6;
+@define-color peach_dim #c58c61;
+@define-color amber #8dffb2;
 
-@define-color red #ff6f7d;
+@define-color red #ff5f66;
 
-@define-color text #d9edf5;
+@define-color text #d7efe6;
 
 * {
   border: none;
@@ -26,7 +29,7 @@
     "JetBrainsMono Nerd Font Mono", monospace;
   font-size: 15px;
   font-weight: 900;
-  letter-spacing: 0;
+  letter-spacing: 0.3px;
 }
 
 window#waybar,
@@ -52,20 +55,23 @@ window#waybar,
 #battery,
 #pulseaudio,
 #backlight {
-  background: alpha(@steel, 0.72);
+  background: alpha(@steel, 0.78);
   background-image:
-    linear-gradient(180deg, alpha(@cyan_soft, 0.10) 0, transparent 1px, transparent 4px),
-    linear-gradient(90deg, alpha(@cyan_dim, 0.055) 1px, transparent 1px),
-    linear-gradient(180deg, alpha(@bg_deep, 0.20), transparent 45%, alpha(@cyan, 0.035));
-  background-size: 100% 5px, 12px 100%, 100% 100%;
-  border: 2px solid @cyan;
-  color: @cyan;
-  border-radius: 2px;
+    linear-gradient(180deg, alpha(@glass, 0.42) 0, transparent 1px, transparent 5px),
+    linear-gradient(90deg, alpha(@glass, 0.16) 1px, transparent 1px),
+    linear-gradient(135deg, alpha(@panel, 0.24) 0, transparent 18%, transparent 82%, alpha(@panel, 0.18)),
+    linear-gradient(180deg, alpha(@bg_deep, 0.30), transparent 48%, alpha(@bg_deep, 0.14));
+  background-size: 100% 6px, 13px 100%, 100% 100%, 100% 100%;
+  border: 2px solid @phosphor;
+  color: @phosphor;
+  border-radius: 3px;
   margin: 5px 4px;
-  padding: 1px 7px;
+  padding: 1px 8px;
   box-shadow:
-    inset 0 0 8px 0 alpha(@cyan, 0.13),
-    0 0 9px 1px alpha(@cyan, 0.30);
+    inset 0 0 0 1px alpha(@bg_deep, 0.62),
+    inset 0 -7px 12px 0 alpha(@bg_deep, 0.24),
+    inset 0 0 10px 0 alpha(@glass, 0.16),
+    0 0 10px 1px alpha(@phosphor, 0.22);
 }
 
 #custom-power,
@@ -79,7 +85,7 @@ window#waybar,
 #custom-brightness,
 #custom-nvim,
 #custom-files {
-  min-width: 52px;
+  min-width: 53px;
 }
 
 #clock label,
@@ -98,24 +104,25 @@ window#waybar,
   padding-bottom: 0;
   min-height: 20px;
   text-shadow:
-    0 0 2px alpha(@phosphor, 0.45),
-    0 0 7px alpha(@cyan, 0.42);
+    0 0 2px alpha(@phosphor, 0.56),
+    0 0 8px alpha(@phosphor, 0.42);
 }
 
 #clock {
-  color: @peach;
-  min-width: 92px;
-  padding-left: 12px;
-  padding-right: 12px;
-  border-color: @peach_dim;
-  background: alpha(@bg, 0.72);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@peach_dim, 0.05) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
-  box-shadow: 0 0 7px 0 alpha(@peach, 0.14);
+  color: @phosphor;
+  min-width: 96px;
+  padding-left: 13px;
+  padding-right: 13px;
+  border-color: alpha(@phosphor, 0.80);
+  background: alpha(@graphite, 0.82);
+  background-image:
+    linear-gradient(90deg, alpha(@glass, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@peach_dim, 0.08), transparent 52%, alpha(@bg_deep, 0.22));
+  background-size: 12px 100%, 100% 100%;
+  text-shadow: 0 0 7px alpha(@phosphor, 0.34);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.68),
+    0 0 9px 0 alpha(@phosphor, 0.18);
 }
 
 #custom-power,
@@ -125,30 +132,28 @@ window#waybar,
 #custom-microphone,
 #custom-nvim,
 #custom-files {
-  background: alpha(@steel, 0.72);
+  background: alpha(@steel, 0.78);
 }
 
 #custom-battery,
 #custom-volume,
 #custom-brightness {
-  background: alpha(@steel, 0.72);
-  border-color: alpha(@cyan, 0.88);
+  background: alpha(@steel, 0.78);
+  border-color: @phosphor;
 }
 
 #custom-volume {
-  border-color: alpha(@cyan, 0.88);
+  border-color: @phosphor;
 }
 
 #custom-vpn {
-  color: @peach;
-  border-color: alpha(@peach_dim, 0.88);
-  background: alpha(@steel, 0.72);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@peach_dim, 0.045) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
+  color: @amber;
+  border-color: alpha(@amber, 0.86);
+  background: alpha(@graphite, 0.80);
+  background-image:
+    linear-gradient(90deg, alpha(@amber, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@bg_deep, 0.20), transparent 48%, alpha(@amber, 0.035));
+  background-size: 12px 100%, 100% 100%;
 }
 
 #workspaces {
@@ -159,40 +164,42 @@ window#waybar,
 
 #workspaces button {
   all: initial;
-  color: @cyan;
+  color: @phosphor;
   min-width: 23px;
   padding: 2px 8px;
   margin: 5px 4px;
-  background: alpha(@steel, 0.72);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@cyan_dim, 0.04) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
-  border: 2px solid alpha(@cyan_dim, 0.82);
-  border-radius: 2px;
+  background: alpha(@graphite, 0.76);
+  background-image:
+    linear-gradient(90deg, alpha(@glass, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@panel, 0.12), transparent 52%, alpha(@bg_deep, 0.24));
+  background-size: 12px 100%, 100% 100%;
+  border: 2px solid @phosphor;
+  border-radius: 3px;
   font-family:
     "GohuFont 11 Nerd Font", "GohuFont", "Terminus",
     "JetBrainsMono Nerd Font Mono", monospace;
   font-size: 15px;
   font-weight: 900;
-  text-shadow: 0 0 4px alpha(@cyan, 0.22);
-  box-shadow: 0 0 7px 1px alpha(@cyan, 0.22);
+  text-shadow: 0 0 4px alpha(@phosphor, 0.28);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.64),
+    0 0 7px 1px alpha(@phosphor, 0.18);
 }
 
 #workspaces button.active {
-  color: @peach;
-  border-color: @cyan;
-  background: alpha(@panel, 0.78);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@peach_dim, 0.055) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
-  text-shadow: 0 0 5px alpha(@peach, 0.34);
-  box-shadow: 0 0 10px 1px alpha(@cyan, 0.28);
+  color: @phosphor_hot;
+  border-color: @phosphor_hot;
+  background: alpha(@panel, 0.84);
+  background-image:
+    linear-gradient(90deg, alpha(@glass, 0.18) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@panel, 0.14), transparent 52%, alpha(@bg_deep, 0.18));
+  background-size: 12px 100%, 100% 100%;
+  text-shadow:
+    0 0 5px alpha(@phosphor_hot, 0.45),
+    0 0 10px alpha(@phosphor_hot, 0.24);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.68),
+    0 0 11px 1px alpha(@phosphor_hot, 0.24);
 }
 
 #workspaces button.urgent,
@@ -204,38 +211,40 @@ window#waybar,
 #custom-microphone.muted {
   color: @bg_deep;
   background: @red;
-  background-image: linear-gradient(
-    90deg,
-    alpha(@peach, 0.08) 1px,
-    transparent 1px
-  );
-  background-size: 11px 100%;
-  border-color: @peach;
-  text-shadow: 0 0 5px alpha(@red, 0.34);
-  box-shadow: 0 0 8px 0 alpha(@red, 0.18);
+  background-image:
+    linear-gradient(135deg, alpha(@phosphor_hot, 0.24) 4px, transparent 4px, transparent 8px),
+    linear-gradient(180deg, alpha(@peach, 0.12), transparent 62%, alpha(@bg_deep, 0.18));
+  background-size: 18px 18px, 100% 100%;
+  border-color: @phosphor_hot;
+  text-shadow: 0 0 5px alpha(@red, 0.40);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.50),
+    0 0 10px 1px alpha(@red, 0.30);
 }
 
 #custom-vpn.critical {
   color: @red;
-  background: alpha(@steel, 0.72);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@red, 0.055) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
+  background: alpha(@graphite, 0.82);
+  background-image:
+    linear-gradient(90deg, alpha(@red, 0.075) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@red, 0.05), transparent 52%, alpha(@bg_deep, 0.26));
+  background-size: 12px 100%, 100% 100%;
   border-color: @red;
-  text-shadow: 0 0 5px alpha(@red, 0.38);
-  box-shadow: 0 0 8px 0 alpha(@red, 0.18);
+  text-shadow: 0 0 6px alpha(@red, 0.46);
+  box-shadow: 0 0 10px 0 alpha(@red, 0.24);
 }
 
 #custom-battery.warning,
 #custom-volume.warning,
-#custom-brightness.warning {
+#custom-brightness.warning,
+#custom-volume.boosted,
+#custom-vpn.standby {
   color: @amber;
   border-color: @amber;
-  text-shadow: 0 0 5px alpha(@amber, 0.3);
-  box-shadow: 0 0 7px 0 alpha(@amber, 0.14);
+  text-shadow: 0 0 6px alpha(@phosphor_hot, 0.36);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.60),
+    0 0 9px 0 alpha(@phosphor_hot, 0.18);
 }
 
 #custom-battery.normal,
@@ -243,7 +252,7 @@ window#waybar,
 #custom-brightness.normal,
 #custom-microphone.normal,
 #custom-vpn.normal {
-  color: @cyan;
+  color: @phosphor;
 }
 
 #custom-battery.hidden,
@@ -270,42 +279,44 @@ window#waybar,
 #custom-nvim:hover,
 #custom-files:hover,
 #tray:hover {
-  color: @cyan_soft;
-  background: alpha(@panel, 0.78);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@cyan_soft, 0.06) 1px,
-    transparent 1px
-  );
-  background-size: 11px 100%;
-  border-color: @cyan_soft;
-  text-shadow: 0 0 6px alpha(@cyan_soft, 0.4);
-  box-shadow: 0 0 12px 1px alpha(@cyan, 0.34);
+  color: @phosphor;
+  background: alpha(@panel, 0.88);
+  background-image:
+    linear-gradient(90deg, alpha(@glass, 0.18) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@panel, 0.16), transparent 58%, alpha(@bg_deep, 0.16));
+  background-size: 11px 100%, 100% 100%;
+  border-color: @phosphor;
+  text-shadow:
+    0 0 6px alpha(@phosphor, 0.44),
+    0 0 12px alpha(@phosphor, 0.18);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.66),
+    0 0 13px 1px alpha(@phosphor, 0.28);
 }
 
 #clock:hover,
 #custom-vpn:hover {
-  color: @peach;
-  border-color: @peach;
+  color: @phosphor;
+  border-color: @phosphor;
 }
 
 tooltip {
-  background: alpha(@bg_deep, 0.78);
-  background-image: linear-gradient(
-    90deg,
-    alpha(@cyan_dim, 0.04) 1px,
-    transparent 1px
-  );
-  background-size: 12px 100%;
+  background: alpha(@bg_deep, 0.88);
+  background-image:
+    linear-gradient(90deg, alpha(@glass, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, alpha(@panel, 0.12), transparent 58%, alpha(@bg_deep, 0.32));
+  background-size: 12px 100%, 100% 100%;
   color: @text;
-  border: 2px solid @cyan_dim;
-  border-radius: 2px;
+  border: 2px solid @phosphor;
+  border-radius: 3px;
   padding: 6px 8px;
-  box-shadow: 0 0 8px 0 alpha(@cyan, 0.14);
+  box-shadow:
+    inset 0 0 0 1px alpha(@bg_deep, 0.70),
+    0 0 10px 0 alpha(@phosphor, 0.15);
 }
 
 tooltip label {
-  color: @cyan_soft;
+  color: @phosphor;
   padding: 2px;
-  text-shadow: 0 0 5px alpha(@cyan_soft, 0.3);
+  text-shadow: 0 0 6px alpha(@phosphor, 0.34);
 }

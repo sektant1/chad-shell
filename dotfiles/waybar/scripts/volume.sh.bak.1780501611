@@ -31,9 +31,6 @@ if [[ "$is_muted" == true ]]; then
     label=""
     vol_int=0
     class="muted"
-elif ((vol_int > 100)); then
-    label=""
-    class="boosted"
 elif ((vol_int < 50)); then
     label=""
     class="warning"

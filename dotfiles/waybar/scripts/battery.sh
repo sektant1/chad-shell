@@ -10,8 +10,8 @@ if ! battery_path="$(first_battery)"; then
   exit 0
 fi
 
-capacity="$(cat "$battery_path/capacity" 2>/dev/null || printf '0')"
-status="$(cat "$battery_path/status" 2>/dev/null || printf 'Unknown')"
+IFS= read -r capacity <"$battery_path/capacity" 2>/dev/null || capacity=0
+IFS= read -r status <"$battery_path/status" 2>/dev/null || status=Unknown
 [[ "$capacity" =~ ^[0-9]+$ ]] || capacity=0
 ((capacity > 100)) && capacity=100
 
@@ -38,6 +38,9 @@ else
 fi
 
 tooltip="Battery: ${capacity}%\nStatus: ${status}\nDevice: ${battery_path##*/}"
+if has_cmd powerprofilesctl; then
+  power_profile="$(timeout 1 powerprofilesctl get 2>/dev/null || true)"
+  [[ -n "$power_profile" ]] && tooltip+="\nPower mode: ${power_profile}"
+fi
 text="[ <span size='large'>$icon</span> ${capacity}% ]"
 json_text "$text" "$tooltip" "$class"
-

@@ -11,7 +11,7 @@ ChadShell is the config for my Hyprland desktop. Every program gets the same fla
 - `animated-neofetch.sh`, which loops ASCII frames beside cached neofetch output.
 - A zsh config.
 
-![Rofi open over the desktop, with Waybar across the top](/content-assets/projects/chadshell/assets/demo-rofi-2.png)
+![Rofi open over the desktop, with Waybar across the top](assets/demo-rofi-2.png)
 
 `hypr/scripts/waybar_watcher.sh` starts at login and changes the wallpaper depending on whether the current workspace has any windows.
 
@@ -19,7 +19,7 @@ ChadShell is the config for my Hyprland desktop. Every program gets the same fla
 
 A tall column of boxed readouts, labelled as if the laptop were a reactor: uptime, CPU and GPU temperature, CPU, RAM and storage bars, power draw and voltages, fan speeds, download, upload, ping and VPN state. The box at the top is the audio visualizer. Temperatures, voltages and fans come from lm-sensors, GPU stats from nvidia-smi.
 
-![The Eww HUD](/content-assets/projects/chadshell/assets/demo-eww.gif)
+![The Eww HUD](assets/demo-eww.gif)
 
 ## Audio visualizer
 
@@ -30,8 +30,8 @@ cava -p ~/.config/cava/config
 python3 ~/.config/eww/scripts/audio/audio_visualizer.py
 watch -n0.1 cat /tmp/visualizer.txt
 ```
-
-![The ASCII visualizer](/content-assets/projects/chadshell/assets/demo-cava-2.gif)
+ 
+![The ASCII visualizer](assets/demo-cava-2.gif)
 
 ## Install
 

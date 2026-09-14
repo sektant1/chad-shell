@@ -1,4 +1,4 @@
-# Dionysus Dotfiles Audit
+# chadshell Dotfiles Audit
 
 Date: 2026-05-27
 Repository: `git@github.com:pewdiepie-archdaemon/dionysus.git`

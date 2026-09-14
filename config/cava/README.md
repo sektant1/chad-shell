@@ -1,7 +1,7 @@
 # CAVA config
 
 ───────────────────────────────────────────────  
- °˖* ૮( • ᴗ ｡)っ🍸 shheersh - Dionysus vers. 1.0   
+ °˖* ૮( • ᴗ ｡)っ🍸 shheersh - chadshell v1.0   
  ───────────────────────────────────────────────  
 
 ## Custom **CAVA** config

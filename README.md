@@ -1,74 +1,55 @@
-# Dionysus Dotfiles
+ChadShell is the config for my Hyprland desktop. Every program gets the same flat slate background, cyan borders and square-bracket labels, with Cyrillic where I could fit it. The repo holds each program's config and the shell scripts that link it into `~/.config`.
 
-Ubuntu/Debian-first Hyprland desktop dotfiles. Current rice uses Hyprland, Waybar, Rofi, CAVA, Eww, Alacritty, Neofetch and shell helpers.
+<C>the repo is still called dionysus, the project's old name</C>
 
-This repo refactor preserves the existing appearance and behavior. Config values, keybinds, Waybar module order, Rofi theme values and wallpaper behavior are carried forward unchanged.
+## What's in it
+
+- Hyprland with vim keys for focus and window movement. Most binds check that their program is installed first, so a bind for a missing tool does nothing.
+- A terminal bind that tries alacritty, kitty, foot, wezterm, ghostty and xterm, in that order.
+- Waybar with the clock and launcher buttons on the left and system status on the right. Workspaces show as Cyrillic letters, and the active one becomes `[●]`.
+- A Rofi launcher with an image panel next to the app list.
+- `animated-neofetch.sh`, which loops ASCII frames beside cached neofetch output.
+- A zsh config.
+
+![Rofi open over the desktop, with Waybar across the top](/content-assets/projects/chadshell/assets/demo-rofi-2.png)
+
+`hypr/scripts/waybar_watcher.sh` starts at login and changes the wallpaper depending on whether the current workspace has any windows.
+
+## Eww HUD
+
+A tall column of boxed readouts, labelled as if the laptop were a reactor: uptime, CPU and GPU temperature, CPU, RAM and storage bars, power draw and voltages, fan speeds, download, upload, ping and VPN state. The box at the top is the audio visualizer. Temperatures, voltages and fans come from lm-sensors, GPU stats from nvidia-smi.
+
+![The Eww HUD](/content-assets/projects/chadshell/assets/demo-eww.gif)
+
+## Audio visualizer
+
+Hyprland starts CAVA in raw mode, writing ASCII bar values to `/tmp/cava.raw`. `audio_visualizer.py` reads that file and draws dots with a fading trail into `/tmp/visualizer.txt`, which Eww shows. A terminal can show it too:
+
+```sh
+cava -p ~/.config/cava/config
+python3 ~/.config/eww/scripts/audio/audio_visualizer.py
+watch -n0.1 cat /tmp/visualizer.txt
+```
+
+![The ASCII visualizer](/content-assets/projects/chadshell/assets/demo-cava-2.gif)
 
 ## Install
 
-Preview actions:
+`scripts/install` symlinks modules from `dotfiles/` into `~/.config`, or all of them when you name none. It won't replace an existing config without `--force`, and with it the old directory is moved to `${XDG_STATE_HOME:-~/.local/state}/dionysus/backups/` first.
 
 ```sh
-./install.sh --dry-run --no-packages
+./scripts/install --dry-run
+./scripts/install hypr waybar rofi alacritty cava eww
+./scripts/install --force hypr waybar rofi
 ```
 
-Install packages and symlink configs:
+Packages are a separate step, with one script for Arch and one for Ubuntu 24.04. `scripts/doctor` lists any commands that are still missing.
 
 ```sh
-./install.sh --force
+./scripts/install-packages-arch --dry-run --desktop --optional --aur
+./scripts/install-packages-ubuntu --dry-run --desktop --optional
+./scripts/doctor
 ```
 
-Copy configs instead of symlinking:
+Monitor rules for one machine go in `~/.config/hypr/local.conf`, which the main config sources last.
 
-```sh
-./install.sh --copy --force
-```
-
-Existing targets are backed up before replacement under `./backup-install-TIMESTAMP/`.
-
-## Reload
-
-```sh
-./scripts/reload.sh
-```
-
-This runs `hyprctl reload` when inside Hyprland, restarts only `waybar`, and leaves Rofi alone because it is not a daemon.
-
-## Validate
-
-```sh
-./scripts/healthcheck.sh
-./scripts/lint
-```
-
-## Uninstall
-
-```sh
-./uninstall.sh --dry-run
-./uninstall.sh
-```
-
-Uninstall removes only symlinks pointing into this repo. It never deletes copied configs or user files.
-
-## Restore Backups
-
-Pick a backup folder, remove the current target, then move the backup back:
-
-```sh
-rm ~/.config/waybar
-mv ./backup-install-TIMESTAMP/waybar ~/.config/waybar
-```
-
-Pre-refactor source backup lives under `./backup-before-refactor-TIMESTAMP/`.
-
-## Host Overrides
-
-Hyprland machine-specific monitor rules go in `~/.config/hypr/local.conf`.
-
-Optional environment overrides live in `~/.config/dionysus/local.env`:
-
-```sh
-DIONYSUS_WALLPAPER_IDLE=$HOME/Pictures/wallpapers/idle.png
-DIONYSUS_WALLPAPER_ACTIVE=$HOME/Pictures/wallpapers/active.png
-DIONYSUS_KBD_BRIGHTNESS_PATH=/sys/class/leds/asus::kbd_backlight/brightness
-```

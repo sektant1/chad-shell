@@ -1,0 +1,13 @@
+.remember/
+backup-before-refactor-*/
+backup-install-*/
+backup-link-*/
+backup-manual-*/
+*.log
+*.bak
+*.bak.*
+*.swp
+*.tmp
+.cache/
+__pycache__/
+config/hypr/hypr.log

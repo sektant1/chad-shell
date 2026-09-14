@@ -1,0 +1,10 @@
+eww
+nordvpn
+asusctl
+neofetch
+shellcheck
+shfmt
+kitty
+foot
+wezterm
+ghostty
